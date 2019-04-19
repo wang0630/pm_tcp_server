@@ -19,7 +19,8 @@ def handler(sock, addr):
             msg = sock.recv(1024)
             if not msg:
                 # continue
-                print('is this the bug')
+                # print('is this the bug')
+                pass
             else:
                 try:
                     # json format must be double quoted instead of being single quoted
