@@ -12,34 +12,29 @@ def handler(sock, addr):
     # print(sock.gettimeout())
     sock.send(msg.encode('utf-8'))
     data = {}
-    while True:
-        try:
-            # socket is in blocking-mode by default
-            # so recv() will fail if 90s has passed
-            msg = sock.recv(1024)
-            if not msg:
-                # continue
-                # print('is this the bug')
-                pass
-            else:
-                try:
-                    # json format must be double quoted instead of being single quoted
-                    data = json.loads(msg.decode('utf-8').replace("\'", "\""))
-                    print(f"{datetime.datetime.utcnow()}: {data}")
-                    # unpacking the tuple
-                    PMData(pm10=data.get('pm10'), pm25=data.get('pm25'), pm100=data.get('pm100'), temp=data.get('temp'),
-                        humidity=data.get('humidity'), position=data.get('position'), date=datetime.datetime.utcnow()).save()
-                # break # shut down after a successful connection
-                except pymodm.errors.ValidationError as err:
-                    print(err)
-                except ValueError as err:
-                    print(err)
-            # except socket.timeout as err:
-            #     print(f"Which bitch data {data}")
-            #     print(f"{data.get('position', addr)} disconnects")
-            #     break
-        except NameError as err:
-            print(err)
+    try:
+        # socket is in blocking-mode by default
+        # so recv() will fail if 300s has passed
+        msg = sock.recv(1024)
+        if msg:
+            try:
+                # json format must be double quoted instead of being single quoted
+                data = json.loads(msg.decode('utf-8').replace("\'", "\""))
+                print(f"{datetime.datetime.utcnow()}: {data}")
+                # unpacking the tuple
+                PMData(pm10=data.get('pm10'), pm25=data.get('pm25'), pm100=data.get('pm100'), temp=data.get('temp'),
+                    humidity=data.get('humidity'), position=data.get('position'), date=datetime.datetime.utcnow()).save()
+            # break # shut down after a successful connection
+            except pymodm.errors.ValidationError as err:
+                print(err)
+            except ValueError as err:
+                print(err)
+    except socket.timeout as err:
+       print(err)
+    except socket.error as err:
+        print(err)
+    except NameError as err:
+        print(err)
     sock.close()
 
 def main():
@@ -55,7 +50,8 @@ def main():
     while True:
         (socket_accept, addr) = main_sock.accept()
         # Create a new thread to handle requests
-        # socket_accept.settimeout(90)
+        # 300 seconds of timeout
+        socket_accept.settimeout(300)
         thread = threading.Thread(target=handler, args=(socket_accept, addr))
         thread.start()
 
