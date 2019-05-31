@@ -6,12 +6,15 @@ import pytz
 import pymodm
 from db import connect_to_db
 from models.data_model import PMData
+from notification.notification import send_alarm
+
 # Request handler
 def handler(sock, addr):
     msg = 'YEE from server. YEEEEEEEEEE\0'
     # print(sock.gettimeout())
     sock.send(msg.encode('utf-8'))
     data = {}
+    # my_position = 'default'
     try:
         # socket is in blocking-mode by default
         # so recv() will fail if 300s has passed
@@ -21,6 +24,7 @@ def handler(sock, addr):
                 # json format must be double quoted instead of being single quoted
                 data = json.loads(msg.decode('utf-8').replace("\'", "\""))
                 print(f"{datetime.datetime.utcnow()}: {data}")
+                my_position = data.get('position', 'default')
                 # unpacking the tuple
                 PMData(pm10=data.get('pm10'), pm25=data.get('pm25'), pm100=data.get('pm100'), temp=data.get('temp'),
                     humidity=data.get('humidity'), position=data.get('position'), date=datetime.datetime.utcnow()).save()
@@ -30,7 +34,13 @@ def handler(sock, addr):
             except ValueError as err:
                 print(err)
     except socket.timeout as err:
-       print(err)
+        print(err)
+        message = f"""\
+            Sensor disconnects again
+
+            sock: { sock } and addr { addr } timeout
+            """
+        send_alarm(message)
     except socket.error as err:
         print(err)
     except NameError as err:

@@ -14,7 +14,10 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 EXPOSE 8080
 
 # Define environment variable
-# ENV NAME World
+ENV SENDER pythonwang0630@gmail.com
+ENV PASSWORD pythonpython
+ENV RECEIVER1 f74056205@gs.ncku.edu.tw
+ENV RECEIVER2 iphone31302@gmail.com
 
 # Run app when the container launches
 CMD ["python3", "-u", "-m", "server"]
